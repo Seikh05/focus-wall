@@ -37,4 +37,4 @@ npm start
 ```
 
 ---
-*Coded with love by [SM](https://github.com/Seikh05). Special thanks to Gemini and Claude.*
+*🛠️ Forged out of sheer procrastination by [Seikh Mustakim](https://github.com/Seikh05) ☕ (With intense moral support from Gemini ✨ & Claude 🤖)*
