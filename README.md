@@ -15,7 +15,7 @@
 
 ## 🚀 How to Run
 
-1. Download the [FocusWall Desktop Package from Google Drive](link-goes-here).
+1. Download the [FocusWall Desktop Package from Google Drive](https://drive.google.com/file/d/1kS9K0NZHRIfXM94eUnqnQcFQdE4ayGqZ/view?usp=sharing).
 2. Extract the **entire folder** to your desktop or program files.
 3. Double-click `FocusWall.exe` inside the folder to launch the dashboard.
 
