@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusWall – Your Task Awaits</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #e8ff47;
+            --accent2: #ff4f4f;
+            --text: #f0ede8;
+            --muted: rgba(240, 237, 232, 0.4);
+            --glow: rgba(232, 255, 71, 0.15);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            background-size: 150px;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+            animation: grain 0.5s steps(2) infinite;
+        }
+
+        @keyframes grain {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(-1%, -1%);
+            }
+
+            50% {
+                transform: translate(1%, 1%);
+            }
+
+            75% {
+                transform: translate(-1%, 1%);
+            }
+        }
+
+        /* Radial glow background */
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 80%, rgba(232, 255, 71, 0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 80% 20%, rgba(255, 79, 79, 0.05) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* MAIN LAYOUT */
+        .wallpaper {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-columns: 1fr 420px;
+            grid-template-areas:
+                "clock  clock"
+                "task   sidebar"
+                "footer footer";
+            gap: 0;
+            padding: 32px 48px 24px;
+        }
+
+        /* ── CLOCK ── */
+        .clock-area {
+            grid-area: clock;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 36px;
+        }
+
+        .clock-time {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(80px, 12vw, 160px);
+            line-height: 0.9;
+            letter-spacing: 2px;
+            color: var(--text);
+            text-shadow: 0 0 80px rgba(240, 237, 232, 0.08);
+        }
+
+        .clock-time .colon {
+            animation: blink 1s step-end infinite;
+            color: var(--accent);
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.2
+            }
+        }
+
+        .clock-meta {
+            text-align: right;
+            padding-bottom: 14px;
+        }
+
+        .clock-date {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .clock-greeting {
+            font-size: 15px;
+            color: var(--accent);
+            font-weight: 400;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── MAIN TASK AREA ── */
+        .task-area {
+            grid-area: task;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-right: 56px;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .task-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .label {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .sleep-headline {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(36px, 5.5vw, 76px);
+            line-height: 1;
+            color: var(--text);
+            margin-bottom: 32px;
+            word-break: break-word;
+        }
+
+        .sleep-headline .highlight {
+            color: var(--accent);
+            -webkit-text-stroke: 0px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            animation: pulse-text 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-text {
+
+            0%,
+            100% {
+                text-shadow: 0 0 40px var(--glow);
+            }
+
+            50% {
+                text-shadow: 0 0 80px var(--glow), 0 0 120px rgba(232, 255, 71, 0.08);
+            }
+        }
+
+        .sleep-subtitle {
+            font-size: 16px;
+            color: var(--muted);
+            max-width: 460px;
+            line-height: 1.7;
+            font-weight: 300;
+            margin-bottom: 40px;
+        }
+
+        /* Input area */
+        .task-input-wrap {
+            display: flex;
+            gap: 12px;
+            max-width: 560px;
+            margin-bottom: auto;
+        }
+
+        .task-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 16px 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .task-input::placeholder {
+            color: var(--muted);
+        }
+
+        .task-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--glow);
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: #0a0a0f;
+            border: none;
+            border-radius: 4px;
+            padding: 16px 28px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        .btn-add:active {
+            transform: translateY(0);
+        }
+
+        /* ── SIDEBAR TASKS ── */
+        .sidebar {
+            grid-area: sidebar;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border);
+            padding-left: 36px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .sidebar-header {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-count {
+            background: var(--accent);
+            color: #0a0a0f;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .task-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+
+        .task-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            animation: slide-in 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .task-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transition: transform 0.2s;
+            transform-origin: bottom;
+        }
+
+        .task-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .task-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .task-item.done {
+            opacity: 0.35;
+            border-color: transparent;
+        }
+
+        .task-item.done::before {
+            background: var(--muted);
+            transform: scaleY(1);
+        }
+
+        .task-check {
+            width: 18px;
+            height: 18px;
+            border: 1.5px solid var(--border);
+            border-radius: 2px;
+            flex-shrink: 0;
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .task-item.done .task-check {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .task-check svg {
+            display: none;
+        }
+
+        .task-item.done .task-check svg {
+            display: block;
+        }
+
+        .task-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text);
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .task-item.done .task-text {
+            text-decoration: line-through;
+            color: var(--muted);
+        }
+
+        .task-del {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: var(--accent2);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 2px;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .task-item:hover .task-del {
+            opacity: 1;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            font-family: 'Space Mono', monospace;
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        .empty-state .big {
+            font-size: 32px;
+            margin-bottom: 4px;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            grid-area: footer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 24px;
+        }
+
+        .footer-left {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .progress-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            width: 160px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Fullscreen hint */
+        .fs-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+        }
+
+        .fs-hint:hover {
+            color: var(--text);
+        }
+
+        kbd {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 2px 5px;
+        }
+
+        /* Multi Mode overrides */
+        .multi-task-list {
+            gap: 28px;
+            padding: 0;
+            max-height: 250px;
+            margin-top: 5px;
+        }
+
+        .multi-task-list .task-item {
+            background: transparent;
+            border: none;
+            padding: 4px 0px;
+            align-items: center;
+            gap: 24px;
+            transition: opacity 0.2s;
+        }
+
+        .multi-task-list .task-item::before {
+            display: none;
+        }
+
+        .multi-task-list .task-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(28px, 4vw, 54px);
+            line-height: 1.1;
+            color: var(--accent);
+            opacity: 0.6;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .multi-task-list .current-task .task-text {
+            font-size: clamp(38px, 6vw, 84px);
+            opacity: 1;
+            text-shadow: 0 0 25px var(--glow);
+        }
+
+        .multi-task-list .task-check {
+            display: none;
+        }
+
+        .multi-task-list .task-item.done {
+            opacity: 0.5;
+        }
+
+        .multi-task-list .task-item.done .task-text {
+            color: var(--muted);
+            text-shadow: none;
+            -webkit-text-stroke: 0;
+            text-decoration: line-through;
+        }
+
+        .multi-task-list .task-item.done .task-check {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+
+        .multi-task-list .task-del {
+            font-size: 28px;
+            background: transparent;
+            text-shadow: none;
+            margin-top: 0;
+            padding: 4px;
+        }
+
+        #modeToggleBtn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-glow"></div>
+
+    <div class="wallpaper">
+
+        <!-- CLOCK -->
+        <div class="clock-area">
+            <div class="clock-time" id="clockDisplay">00<span class="colon">:</span>00</div>
+            <div class="clock-meta">
+                <div class="clock-date" id="dateDisplay">Sunday, March 29</div>
+                <div class="clock-greeting" id="greetDisplay">Good evening ✦</div>
+            </div>
+        </div>
+
+        <!-- MAIN TASK AREA -->
+        <div class="task-area">
+            <div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Focus Mode</span>
+                <button id="modeToggleBtn" onclick="toggleViewMode()"
+                    style="background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'Space Mono'; font-size:9px; letter-spacing:1px; cursor:pointer; padding:4px 8px; border-radius:2px; text-transform:uppercase; transition:all 0.2s;">Multi
+                    Mode</button>
+            </div>
+
+            <div id="singleModeView">
+                <div class="sleep-headline">
+                    You were working on
+                    <span class="highlight" id="heroTask">— nothing yet —</span>
+                </div>
+                <p class="sleep-subtitle">
+                    Your laptop missed you. Pick up where you left off or drop a new task below — the screen won't let
+                    you
+                    forget.
+                </p>
+            </div>
+
+            <div id="multiModeView" style="display:none; flex:1; flex-direction:column;">
+                <div class="sleep-headline" style="margin-bottom: 32px;">
+                    <div id="multiModeHeadline">You were working on</div>
+                    <ul class="task-list multi-task-list" id="multiTaskList"></ul>
+                </div>
+                <p class="sleep-subtitle">
+                    Your laptop missed you. Pick up where you left off or drop a new task below — the screen won't let
+                    you
+                    forget.
+                </p>
+            </div>
+
+            <div class="task-input-wrap">
+                <input class="task-input" id="taskInput" type="text" placeholder="What needs to be done?"
+                    maxlength="120" />
+                <button class="btn-add" onclick="addTask()">+ Add</button>
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span>Your Tasks</span>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <span
+                        style="font-size:9px; cursor:pointer; color:var(--accent2); text-transform:uppercase; letter-spacing:1px; opacity:0.8;"
+                        onclick="clearDoneTasks()">Clear Done</span>
+                    <span class="task-count" id="taskCount">0</span>
+                </div>
+            </div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-left">
+                FocusWall &nbsp;·&nbsp; <span id="footerTime"></span>
+                <span style="opacity:0.5; margin-left:20px; font-size:10px; letter-spacing: 0.5px;">
+                    VibeCoded with love by <a href="https://github.com/Seikh05" target="_blank"
+                        style="color:var(--accent); text-decoration:none;">SM</a> (Thanks to Gemini & Claude)
+                </span>
+            </div>
+            <div class="progress-wrap">
+                <span class="progress-label" id="progressLabel">0 / 0 done</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+            </div>
+            <button class="fs-hint" onclick="toggleFullscreen()">
+                <kbd>F11</kbd> Fullscreen wallpaper mode
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ── CLOCK ──────────────────────────────────────────────────────
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clockDisplay').innerHTML =
+                `${h}<span class="colon">:</span>${m}`;
+
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('dateDisplay').textContent =
+                `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+
+            const hr = now.getHours();
+            let greet = hr < 12 ? 'Good morning ☀' : hr < 17 ? 'Good afternoon ◑' : 'Good evening ✦';
+            document.getElementById('greetDisplay').textContent = greet;
+            document.getElementById('footerTime').textContent =
+                now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ── TASKS ──────────────────────────────────────────────────────
+        let tasks = JSON.parse(localStorage.getItem('fw_tasks') || '[]');
+
+        function saveTasks() {
+            localStorage.setItem('fw_tasks', JSON.stringify(tasks));
+        }
+
+        function updateHero() {
+            const active = tasks.find(t => !t.done);
+            const singleContainer = document.querySelector('#singleModeView .sleep-headline');
+            const multiHeadline = document.getElementById('multiModeHeadline');
+            if (active) {
+                if (singleContainer) singleContainer.innerHTML = `You were working on <span class="highlight" id="heroTask">${escHtml(active.text)}</span>`;
+                if (multiHeadline) multiHeadline.innerHTML = `You were working on`;
+            } else {
+                if (singleContainer) singleContainer.innerHTML = `Focus Mode <span class="highlight" id="heroTask" style="color:var(--muted); text-shadow:none;">— no tasks left —</span>`;
+                if (multiHeadline) multiHeadline.innerHTML = `Focus Mode`;
+            }
+        }
+
+        function clearDoneTasks() {
+            tasks = tasks.filter(t => !t.done);
+            saveTasks();
+            renderTasks();
+        }
+
+        function updateProgress() {
+            const total = tasks.length;
+            const done = tasks.filter(t => t.done).length;
+            document.getElementById('taskCount').textContent = total - done;
+            document.getElementById('progressLabel').textContent = `${done} / ${total} done`;
+            document.getElementById('progressFill').style.width = total ? `${(done / total) * 100}%` : '0%';
+        }
+
+        let viewMode = localStorage.getItem('fw_mode') || 'single';
+
+        function toggleViewMode() {
+            viewMode = viewMode === 'single' ? 'multi' : 'single';
+            localStorage.setItem('fw_mode', viewMode);
+            applyViewMode();
+        }
+
+        function applyViewMode() {
+            const singleView = document.getElementById('singleModeView');
+            const multiView = document.getElementById('multiModeView');
+            const btn = document.getElementById('modeToggleBtn');
+            if (!singleView) return;
+            if (viewMode === 'multi') {
+                singleView.style.display = 'none';
+                multiView.style.display = 'flex';
+                btn.textContent = 'Single Mode';
+                document.querySelector('.task-area .label span').textContent = 'All Tasks';
+            } else {
+                singleView.style.display = 'block';
+                multiView.style.display = 'none';
+                btn.textContent = 'Multi Mode';
+                document.querySelector('.task-area .label span').textContent = 'Focus Mode';
+            }
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            const multiList = document.getElementById('multiTaskList');
+            let content = '';
+
+            if (tasks.length === 0) {
+                content = `<div class="empty-state"><div class="big">◻</div>No tasks yet.<br>Add your first one!</div>`;
+            } else {
+                const activeIdx = tasks.findIndex(t => !t.done);
+                content = tasks.map((t, i) => `
+      <li class="task-item ${t.done ? 'done' : ''} ${i === activeIdx ? 'current-task' : ''}" onclick="toggleTask(${i})">
+        <div class="task-check">
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4L3.5 6.5L9 1" stroke="#0a0a0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="task-text">${escHtml(t.text)}</span>
+        <button class="task-del" onclick="deleteTask(event,${i})">×</button>
+      </li>
+    `).join('');
+            }
+
+            if (list) list.innerHTML = content;
+            if (multiList) multiList.innerHTML = content;
+
+            updateHero();
+            updateProgress();
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (!text) return;
+            tasks.unshift({ text, done: false });
+            saveTasks();
+            renderTasks();
+            input.value = '';
+            input.focus();
+        }
+
+        function toggleTask(i) {
+            tasks[i].done = !tasks[i].done;
+            saveTasks();
+            renderTasks();
+        }
+
+        function deleteTask(e, i) {
+            e.stopPropagation();
+            tasks.splice(i, 1);
+            saveTasks();
+            renderTasks();
+        }
+
+        document.getElementById('taskInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') addTask();
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
+        });
+
+        applyViewMode();
+        renderTasks();
+    </script>
+</body>
+
+</html>
