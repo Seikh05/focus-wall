@@ -1,6 +1,8 @@
 node_modules/
 dist/
 build/
+Release/
 .DS_Store
 *.log
 *.exe
+Release/
